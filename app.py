@@ -22,10 +22,31 @@ def init_db():
     con.close()
 
 
+# Простая HTML-страница с формой входа и ссылкой на файл
+PAGE = """<!DOCTYPE html>
+<html lang="ru">
+<head><meta charset="utf-8"><title>Лаб 2 — уязвимое приложение</title></head>
+<body>
+  <h1>Учебное уязвимое приложение</h1>
+
+  <h2>Вход</h2>
+  <form action="/login" method="get">
+    <p>Логин: <input name="login"></p>
+    <p>Пароль: <input name="password"></p>
+    <p><button type="submit">Войти</button></p>
+  </form>
+
+  <h2>Просмотр файла</h2>
+  <p><a href="/file?name=readme.txt">Открыть readme.txt</a></p>
+</body>
+</html>
+"""
+
+
 class Handler(BaseHTTPRequestHandler):
-    def send(self, code, text):
+    def send(self, code, text, ctype="text/plain"):
         self.send_response(code)
-        self.send_header("Content-Type", "text/plain; charset=utf-8")
+        self.send_header("Content-Type", f"{ctype}; charset=utf-8")
         self.end_headers()
         self.wfile.write(text.encode("utf-8"))
 
@@ -57,9 +78,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.send(404, "Файл не найден")
 
         else:
-            self.send(200, "Эндпоинты:\n"
-                           "  /login?login=...&password=...\n"
-                           "  /file?name=readme.txt\n")
+            self.send(200, PAGE, "text/html")
 
 
 if __name__ == "__main__":

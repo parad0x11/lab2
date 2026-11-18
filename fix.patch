@@ -1,0 +1,31 @@
+diff --git a/app.py b/app.py
+index 370501c..1a86ec1 100644
+--- a/app.py
++++ b/app.py
+@@ -58,9 +58,9 @@ class Handler(BaseHTTPRequestHandler):
+             login = q.get("login", [""])[0]
+             password = q.get("password", [""])[0]
+             con = sqlite3.connect(DB)
+-            # УЯЗВИМОСТЬ: пользовательский ввод вставляется прямо в SQL-запрос
+-            sql = f"SELECT login FROM users WHERE login = '{login}' AND password = '{password}'"
+-            row = con.execute(sql).fetchone()
++            # ИСПРАВЛЕНО: параметризованный запрос, ввод не попадает в текст SQL
++            sql = "SELECT login FROM users WHERE login = ? AND password = ?"
++            row = con.execute(sql, (login, password)).fetchone()
+             con.close()
+             if row:
+                 self.send(200, f"Добро пожаловать, {row[0]}!")
+@@ -69,8 +69,11 @@ class Handler(BaseHTTPRequestHandler):
+ 
+         elif url.path == "/file":
+             name = q.get("name", [""])[0]
+-            # УЯЗВИМОСТЬ: имя файла не проверяется, можно выйти из папки files через ../
+-            path = os.path.join(FILES, name)
++            # ИСПРАВЛЕНО: получаем реальный путь и проверяем, что он внутри папки files
++            path = os.path.realpath(os.path.join(FILES, name))
++            if not path.startswith(FILES + os.sep):
++                self.send(403, "Доступ запрещён")
++                return
+             try:
+                 with open(path, encoding="utf-8") as f:
+                     self.send(200, f.read())
